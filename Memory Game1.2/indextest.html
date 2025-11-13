@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game</title>
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+        
+        .ad-container {
+            position: relative;
+            width: 300px;
+            height: 250px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        
+        /* Game states */
+        .game-state {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Preloader */
+        #preloader {
+            background: #2575fc;
+            color: white;
+            z-index: 10;
+        }
+        
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Start screen */
+        #start-screen {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .game-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .game-instructions {
+            font-size: 14px;
+            margin-bottom: 20px;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+        
+        .difficulty-selector {
+            margin: 15px 0;
+        }
+        
+        .difficulty-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.5);
+            padding: 6px 12px;
+            margin: 0 5px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+        
+        .difficulty-btn.active {
+            background: white;
+            color: #2575fc;
+            border-color: white;
+        }
+        
+        .difficulty-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        /* Preview screen */
+        #preview-screen {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            text-align: center;
+            padding: 15px;
+        }
+        
+        .preview-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .preview-instructions {
+            font-size: 12px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .preview-grid {
+            display: grid;
+            gap: 3px;
+            margin: 10px 0;
+            width: 100%;
+            height: 60%;
+        }
+        
+        .preview-tile {
+            background: white;
+            border-radius: 3px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #2575fc;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .preview-timer {
+            font-size: 16px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        /* Game screen */
+        #game-screen {
+            background: #2575fc;
+            padding: 10px;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 5px 5px;
+            color: white;
+            font-size: 12px;
+        }
+        
+        .game-grid {
+            display: grid;
+            gap: 5px;
+            width: 100%;
+            height: calc(100% - 25px);
+        }
+        
+        .tile {
+            background: #1a5fc9;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            position: relative;
+        }
+        
+        .tile.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .tile.matched {
+            visibility: hidden;
+        }
+        
+        .tile-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+        }
+        
+        .tile-front {
+            background: #1a5fc9;
+            transform: rotateY(0deg);
+        }
+        
+        .tile-back {
+            background: white;
+            transform: rotateY(180deg);
+            font-size: 18px;
+            font-weight: bold;
+            color: #2575fc;
+        }
+        
+        /* End screen */
+        #end-screen {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .results-title {
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+        
+        .results-stats {
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        /* Buttons */
+        .btn {
+            background: white;
+            color: #2575fc;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover, .btn:focus {
+            background: #f0f0f0;
+            transform: scale(1.05);
+        }
+        
+        .btn:focus {
+            outline: 2px solid white;
+            outline-offset: 2px;
+        }
+        
+        .cta-btn {
+            background: #ffcc00;
+            color: #333;
+            margin-top: 10px;
+        }
+        
+        /* Responsive variants */
+        @media (min-width: 300px) and (min-height: 600px) {
+            .ad-container {
+                width: 300px;
+                height: 600px;
+            }
+            
+            .game-title, .results-title {
+                font-size: 28px;
+            }
+            
+            .preview-title {
+                font-size: 24px;
+            }
+            
+            .game-instructions, .results-stats {
+                font-size: 16px;
+            }
+            
+            .preview-instructions {
+                font-size: 14px;
+            }
+            
+            .tile-back {
+                font-size: 22px;
+            }
+            
+            .difficulty-btn {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (min-width: 320px) and (max-height: 480px) {
+            .ad-container {
+                width: 320px;
+                height: 480px;
+            }
+            
+            .game-title, .results-title {
+                font-size: 26px;
+            }
+            
+            .preview-title {
+                font-size: 22px;
+            }
+            
+            .game-instructions, .results-stats {
+                font-size: 15px;
+            }
+            
+            .difficulty-btn {
+                padding: 7px 14px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ad-container">
+        <!-- Preloader -->
+        <div id="preloader" class="game-state">
+            <div class="loader"></div>
+            <p style="margin-top: 15px;">Loading...</p>
+        </div>
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="game-state hidden">
+            <h1 class="game-title">Memory Game</h1>
+            <p class="game-instructions">Flip tiles to find matching pairs. Test your memory!</p>
+            
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+            </div>
+            
+            <button id="start-btn" class="btn">Start Game</button>
+        </div>
+        
+        <!-- Preview Screen -->
+        <div id="preview-screen" class="game-state hidden">
+            <h2 class="preview-title">Memorize the Tiles!</h2>
+            <p class="preview-instructions">Remember where each symbol is located</p>
+            <div class="preview-timer">Starting in: <span id="preview-countdown">3</span></div>
+            <div class="preview-grid" id="preview-grid">
+                <!-- Preview tiles will be generated here -->
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="game-state hidden">
+            <div class="game-header">
+                <div class="timer">Time: <span id="timer">0</span>s</div>
+                <div class="attempts">Attempts: <span id="attempts">0</span></div>
+                <div class="difficulty">Difficulty: <span id="current-difficulty">Easy</span></div>
+            </div>
+            <div class="game-grid" id="game-grid">
+                <!-- Tiles will be generated here -->
+            </div>
+        </div>
+        
+        <!-- End Screen -->
+        <div id="end-screen" class="game-state hidden">
+            <h2 class="results-title">Congratulations!</h2>
+            <div class="results-stats">
+                <p>Difficulty: <span id="final-difficulty">Easy</span></p>
+                <p>Time: <span id="final-time">0</span> seconds</p>
+                <p>Attempts: <span id="final-attempts">0</span></p>
+                <p>Score: <span id="final-score">0</span></p>
+            </div>
+            <button id="replay-btn" class="btn">Play Again</button>
+            <button id="exit-btn" class="btn cta-btn">Learn More</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            tiles: [],
+            flippedTiles: [],
+            matchedPairs: 0,
+            attempts: 0,
+            startTime: null,
+            timerInterval: null,
+            elapsedTime: 0,
+            totalPairs: 6,
+            gameStarted: false,
+            difficulty: 'easy',
+            previewTime: 3
+        };
+
+        // Difficulty configurations
+        const difficultyConfig = {
+            easy: { pairs: 6, previewTime: 5, grid: { cols: 4, rows: 3 } },
+            medium: { pairs: 8, previewTime: 4, grid: { cols: 4, rows: 4 } },
+            hard: { pairs: 12, previewTime: 3, grid: { cols: 4, rows: 6 } }
+        };
+
+        // Symbols for tiles (using emoji for simplicity)
+        const symbols = ['🍎', '🍌', '🍒', '🍇', '🍊', '🍓', '🍐', '🥭', '🍑', '🍍', '🥥', '🫐'];
+        
+        // DOM elements
+        const preloader = document.getElementById('preloader');
+        const startScreen = document.getElementById('start-screen');
+        const previewScreen = document.getElementById('preview-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const gameGrid = document.getElementById('game-grid');
+        const previewGrid = document.getElementById('preview-grid');
+        const timerElement = document.getElementById('timer');
+        const attemptsElement = document.getElementById('attempts');
+        const previewCountdown = document.getElementById('preview-countdown');
+        const currentDifficultyElement = document.getElementById('current-difficulty');
+        const finalTimeElement = document.getElementById('final-time');
+        finalAttemptsElement = document.getElementById('final-attempts');
+        const finalDifficultyElement = document.getElementById('final-difficulty');
+        const finalScoreElement = document.getElementById('final-score');
+        const startBtn = document.getElementById('start-btn');
+        const replayBtn = document.getElementById('replay-btn');
+        const exitBtn = document.getElementById('exit-btn');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+
+        // Initialize game
+        function initGame() {
+            // Hide all screens except preloader initially
+            preloader.classList.remove('hidden');
+            startScreen.classList.add('hidden');
+            previewScreen.classList.add('hidden');
+            gameScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            
+            // Set up event listeners
+            startBtn.addEventListener('click', startPreview);
+            replayBtn.addEventListener('click', resetToStart);
+            exitBtn.addEventListener('click', handleExit);
+            
+            // Difficulty selection
+            difficultyBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    difficultyBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.difficulty = btn.dataset.difficulty;
+                });
+            });
+            
+            // Simulate preloader
+            setTimeout(() => {
+                preloader.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+            }, 1500);
+        }
+
+        // Reset to start screen
+        function resetToStart() {
+            endScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        }
+
+        // Start the preview phase
+        function startPreview() {
+            const config = difficultyConfig[gameState.difficulty];
+            gameState.totalPairs = config.pairs;
+            gameState.previewTime = config.previewTime;
+            
+            // Create tiles for current difficulty
+            createTiles(config.grid.cols, config.grid.rows);
+            
+            // Show preview screen
+            startScreen.classList.add('hidden');
+            previewScreen.classList.remove('hidden');
+            
+            // Render preview grid
+            renderPreviewGrid(config.grid.cols, config.grid.rows);
+            
+            // Start preview countdown
+            startPreviewCountdown();
+        }
+
+        // Create tile values for the game
+        function createTiles(cols, rows) {
+            const totalTiles = cols * rows;
+            const pairsNeeded = totalTiles / 2;
+            
+            // Select symbols for this game
+            const gameSymbols = symbols.slice(0, pairsNeeded);
+            
+            // Create pairs
+            let tileValues = [];
+            gameSymbols.forEach(symbol => {
+                tileValues.push(symbol, symbol);
+            });
+            
+            // Shuffle the tiles
+            gameState.tiles = shuffleArray(tileValues);
+        }
+
+        // Render preview grid
+        function renderPreviewGrid(cols, rows) {
+            previewGrid.innerHTML = '';
+            previewGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            previewGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            
+            gameState.tiles.forEach((symbol, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'preview-tile';
+                tile.textContent = symbol;
+                previewGrid.appendChild(tile);
+            });
+        }
+
+        // Start preview countdown
+        function startPreviewCountdown() {
+            let countdown = gameState.previewTime;
+            previewCountdown.textContent = countdown;
+            
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                previewCountdown.textContent = countdown;
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    startGame();
+                }
+            }, 1000);
+        }
+
+        // Fisher-Yates shuffle algorithm
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // Start the actual game
+        function startGame() {
+            // Reset game state
+            gameState.matchedPairs = 0;
+            gameState.attempts = 0;
+            gameState.flippedTiles = [];
+            gameState.elapsedTime = 0;
+            gameState.gameStarted = false;
+            
+            // Update UI
+            attemptsElement.textContent = '0';
+            timerElement.textContent = '0';
+            currentDifficultyElement.textContent = gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1);
+            
+            // Clear any existing timer
+            if (gameState.timerInterval) {
+                clearInterval(gameState.timerInterval);
+            }
+            
+            // Create the game grid
+            const config = difficultyConfig[gameState.difficulty];
+            renderGameGrid(config.grid.cols, config.grid.rows);
+            
+            // Show game screen
+            previewScreen.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+        }
+
+        // Render the game grid with tiles
+        function renderGameGrid(cols, rows) {
+            gameGrid.innerHTML = '';
+            gameGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            gameGrid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            
+            gameState.tiles.forEach((symbol, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.dataset.index = index;
+                tile.dataset.symbol = symbol;
+                tile.tabIndex = 0; // Make focusable for accessibility
+                
+                const front = document.createElement('div');
+                front.className = 'tile-face tile-front';
+                
+                const back = document.createElement('div');
+                back.className = 'tile-face tile-back';
+                back.textContent = symbol;
+                
+                tile.appendChild(front);
+                tile.appendChild(back);
+                
+                tile.addEventListener('click', () => flipTile(tile));
+                tile.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        flipTile(tile);
+                    }
+                });
+                
+                gameGrid.appendChild(tile);
+            });
+        }
+
+        // Flip a tile
+        function flipTile(tile) {
+            // Don't allow flipping if already flipped or matched, or if two tiles are already flipped
+            if (tile.classList.contains('flipped') || 
+                tile.classList.contains('matched') || 
+                gameState.flippedTiles.length >= 2) {
+                return;
+            }
+            
+            // Start timer on first flip
+            if (!gameState.gameStarted) {
+                gameState.gameStarted = true;
+                gameState.startTime = Date.now();
+                
+                // Dispatch game start event
+                window.dispatchEvent(new CustomEvent('bm_game_start'));
+                
+                // Start timer
+                gameState.timerInterval = setInterval(() => {
+                    gameState.elapsedTime = Math.floor((Date.now() - gameState.startTime) / 1000);
+                    timerElement.textContent = gameState.elapsedTime;
+                }, 1000);
+            }
+            
+            // Flip the tile
+            tile.classList.add('flipped');
+            gameState.flippedTiles.push(tile);
+            
+            // Check for match if two tiles are flipped
+            if (gameState.flippedTiles.length === 2) {
+                gameState.attempts++;
+                attemptsElement.textContent = gameState.attempts;
+                
+                const tile1 = gameState.flippedTiles[0];
+                const tile2 = gameState.flippedTiles[1];
+                
+                if (tile1.dataset.symbol === tile2.dataset.symbol) {
+                    // Match found
+                    setTimeout(() => {
+                        tile1.classList.add('matched');
+                        tile2.classList.add('matched');
+                        gameState.flippedTiles = [];
+                        gameState.matchedPairs++;
+                        
+                        // Dispatch pair match event
+                        window.dispatchEvent(new CustomEvent('bm_pair_match', {
+                            detail: {
+                                pairsFound: gameState.matchedPairs,
+                                attempts: gameState.attempts
+                            }
+                        }));
+                        
+                        // Check for game completion
+                        if (gameState.matchedPairs === gameState.totalPairs) {
+                            endGame();
+                        }
+                    }, 500);
+                } else {
+                    // No match - flip back
+                    setTimeout(() => {
+                        tile1.classList.remove('flipped');
+                        tile2.classList.remove('flipped');
+                        gameState.flippedTiles = [];
+                    }, 1000);
+                }
+            }
+        }
+
+        // End the game
+        function endGame() {
+            // Stop timer
+            clearInterval(gameState.timerInterval);
+            
+            // Calculate score based on difficulty, time, and attempts
+            const difficultyMultiplier = {
+                easy: 1,
+                medium: 2,
+                hard: 3
+            };
+            
+            const baseScore = 1000;
+            const timePenalty = gameState.elapsedTime * 10;
+            const attemptPenalty = gameState.attempts * 5;
+            const score = Math.max(0, baseScore - timePenalty - attemptPenalty) * difficultyMultiplier[gameState.difficulty];
+            
+            // Update final stats
+            finalTimeElement.textContent = gameState.elapsedTime;
+            finalAttemptsElement.textContent = gameState.attempts;
+            finalDifficultyElement.textContent = gameState.difficulty.charAt(0).toUpperCase() + gameState.difficulty.slice(1);
+            finalScoreElement.textContent = score;
+            
+            // Show end screen
+            gameScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            
+            // Dispatch game complete event
+            window.dispatchEvent(new CustomEvent('bm_game_complete', {
+                detail: {
+                    attempts: gameState.attempts,
+                    timeMs: gameState.elapsedTime * 1000,
+                    difficulty: gameState.difficulty,
+                    score: score
+                }
+            }));
+        }
+
+        // Handle exit button click
+        function handleExit() {
+            // Dispatch exit click event
+            window.dispatchEvent(new CustomEvent('bm_exit_click'));
+            
+            // In a real implementation, this would trigger the GWD exit
+            alert('Exit event triggered - in production this would navigate to the clickthrough URL');
+        }
+
+        // Initialize the game when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
