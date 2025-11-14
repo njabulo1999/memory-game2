@@ -5,20 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Memory Game</title>
     <link rel="stylesheet" href="stylesheet.css">
+    
 </head>
 <body>
-    <div class="game">
-        <div class="controls">
-            <button>Start</button>
-            <div class="stats">
-                <div class="moves">Moves: 0</div>
-                <div class="timer">Time 0 sec</div>
+    <div class="ad-container">
+        <!-- Preloader -->
+        <div id="preloader" class="game-state">
+            <div class="loader"></div>
+            <p style="margin-top: 15px;">Loading...</p>
+        </div>
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="game-state hidden">
+            <h1 class="game-title">Memory Game</h1>
+            <p class="game-instructions">Flip tiles to find matching pairs.</p>
+            
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+            </div>
+            
+            <button id="start-btn" class="btn">Start Game</button>
+        </div>
+        
+        <!-- Preview Screen -->
+        <div id="preview-screen" class="game-state hidden">
+            <h2 class="preview-title">Memorize the Tiles!</h2>
+            <p class="preview-instructions">Remember where each symbol is located</p>
+            <div class="preview-timer">Starting in: <span id="preview-countdown">3</span></div>
+            <div class="preview-grid" id="preview-grid">
+                <!-- Preview tiles will be generated here -->
             </div>
         </div>
-        <div class="board-container">
-            <div class="board" data-dimension="4"></div>
-            <div class="win">YOU WIN!</div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="game-state hidden">
+            <div class="game-header">
+                <div class="timer">Time: <span id="timer">0</span>s</div>
+                <div class="attempts">Attempts: <span id="attempts">0</span></div>
+                <div class="difficulty">Difficulty: <span id="current-difficulty">Easy</span></div>
+            </div>
+            <div class="game-grid" id="game-grid">
+                <!-- Tiles will be generated here -->
+            </div>
+        </div>
+        
+        <!-- End Screen -->
+        <div id="end-screen" class="game-state hidden">
+            <h2 class="results-title">Congratulations!</h2>
+            <div class="results-stats">
+                <p>Difficulty: <span id="final-difficulty">Easy</span></p>
+                <p>Time: <span id="final-time">0</span> seconds</p>
+                <p>Attempts: <span id="final-attempts">0</span></p>
+                <p>Score: <span id="final-score">0</span></p>
+            </div>
+            <button id="replay-btn" class="btn">Play Again</button>
+            <button id="exit-btn" class="btn cta-btn">Learn More</button>
         </div>
     </div>
+
+   <script src="script.js"></script>
 </body>
 </html>
